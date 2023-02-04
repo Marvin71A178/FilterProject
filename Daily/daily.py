@@ -1,18 +1,17 @@
 import os
-import sys
-from datetime import date, datetime
+from datetime import datetime
 import time
-from concurrent.futures import ThreadPoolExecutor
-
+import platform
+import subprocess
 
 def get_python():
-    os_name = sys.platform
-    pythonExe = ""
-    if os_name.lower() == "linux":
-        pythonExe = "python3"
-    elif os_name.lower() == "windows":
-        pythonExe = "python"
-    return pythonExe
+    os_name = platform.system()
+    python_cmd = "python"
+    if os_name == "Windows":
+        python_cmd = "python"
+    elif os_name == "Linux" or os_name == "Darwin":
+        python_cmd = "python3"
+    return python_cmd
 
 
 def get_time_now():
@@ -20,20 +19,29 @@ def get_time_now():
 
 
 def do_scan():
-    parent_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), ".."))
+    parent_path = os.path.abspath(os.path.join(os.path.abspath(__file__) , ".." , ".."))
 
-    dict_path = {"camping": "camp.py", "ChanhuaGirls": "highSchool.py", "darts": "dart.py", "developerWeb": "webProject.py", "erXing": "erXingHigh.py", "G9CreativePark": "G9CreativeParkCrawler.py",
-                 "game": "game.py", "hongKong": "hongkong.py", "hunter": "hunter.py", "jianguoHighSchool": "jianguo.py", "meseum": "museum.py", "peaceHighSchool": "PeaceHighSchool.py", "taoCulture": "taoCul.py", "re_filter_tool": "test.py"}
-
-    for key, value in dict_path.items():
-        workpath = os.path.join(parent_path, key)
-        os.system(f"cd \"{workpath}\" && {get_python()} \"{value}\"")
+    spider_path = os.path.join(parent_path , "Spider")
+    
+    #run Spider
+    for spiderFile in os.listdir(spider_path):
+        spider_file_path = os.path.join(spider_path, spiderFile)
+        if os.path.isfile(spider_file_path):
+            subprocess.run([get_python() , spider_file_path])
+    
+    #run filter
+    subprocess.run([get_python() , os.path.join(parent_path , "FilterTools" , "filter.py")])
+    
+    #post
+    #subprocess.run([get_python() , os.path.join(parent_path , "Daily" , "post.py")])
+    
 
 
 while True:
+    do_scan()
+    break
     Time = get_time_now()
     print("\rtime:", Time, end="")
-    if Time == "20:42:00":
+    if Time == "14:58:50":
         do_scan()
     time.sleep(1)

@@ -61,7 +61,7 @@ try:
                 Activity["Images"].append(i.attrs["src"])
     with open("./FilterTools/SpiderData/Camping2023.json", "w", encoding="utf-8") as writeFile:
         json.dump(Activities, writeFile, ensure_ascii=False, indent=4)
-
+    
     record_runtime(f"\nCamping2023上次更新時間為:{now}\n\t執行成功")
-except:
-    record_runtime(f"\nCamping2023上次更新時間為:{now}\n\t**執行失敗")
+except Exception as e :
+    record_runtime(f"\nCamping2023上次更新時間為:{now}\n\t**執行失敗\n\t\t{e}")

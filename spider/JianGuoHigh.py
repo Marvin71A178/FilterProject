@@ -32,7 +32,7 @@ try:
             if find_href.a['title'][2:10]  !="國立陽明交通大學":
                 hrefs.append("https://www2.ck.tp.edu.tw"+find_href.a['href'])
                 titles.append(find_href.a['title'])
-
+    OutputActivity = []
     for href in hrefs:
         
         res_in = requests.get(href)
@@ -53,43 +53,22 @@ try:
             related_url = []
         if related_url != []:
             article = {
-                "source_web_name":"國立建國高級中學",
-                "source_url":"https://www2.ck.tp.edu.tw/",
-                "url" : related_url,
-                "title" : titles[hrefs.index(href)],
-                "content" : content_str,
-                "date" : None,
-                "image":None,
-                "id" : 0,
+                "Title": titles[hrefs.index(href)],
+                "Content" :content_str,
+                "Sources" :["https://www2.ck.tp.edu.tw/"] + related_url
             }
         else:
             article = {
-                "source_web_name":"國立建國高級中學",
-                "source_url":"https://www2.ck.tp.edu.tw/",
-                "url" : None,
-                "title" : titles[hrefs.index(href)],
-                "content" : content_str,
-                "date" : None,
-                "image":None,
-                "id" : 0,
+                "Title": titles[hrefs.index(href)],
+                "Content" :content_str,
+                "Sources" :["https://www2.ck.tp.edu.tw/"] 
             }
-
-        if not os.path.isfile("./projects/index.json"): # initailize the json file
-            with open("./projects/index.json", "w") as InitialFile:
-                InitialFile.write("[]")
-
-            
-        with open("./projects/index.json", "r", encoding="utf-8") as JsonFile: #transfer the article dic to json 
-            jsonDict = json.load(JsonFile) 
-
-
-        jsonDict.append(article) #add all every dic in to this list
-            
-        with open("./projects/index.json", "w",  encoding="utf-8") as writeFile: #write this to the json file
-            json.dump( jsonDict , writeFile , ensure_ascii=False ,indent = 1 )
-
-                
+        OutputActivity.append(article)
+        
+    with open("./FilterTools/SpiderData/JianGuoHigh.json", "w", encoding="utf-8") as writeFile:
+        json.dump(OutputActivity , writeFile, ensure_ascii=False, indent=4)
+                        
     record_runtime(f"\nJianGuoHigh上次更新時間為:{now}\n\t執行成功")
-except:
-    record_runtime(f"\nJianGuoHigh上次更新時間為:{now}\n\t**執行失敗")
+except Exception as e:
+    record_runtime(f"\nJianGuoHigh上次更新時間為:{now}\n\t**執行失敗\n\t\t{e}")
 

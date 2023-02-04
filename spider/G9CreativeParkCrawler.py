@@ -29,7 +29,7 @@ try:
     
     ActivityList = []
     for url in allActivity_set:
-        print(url)
+        
         sub_url = url
         sub_res = requests.get(sub_url, headers=header)
         sub_soup = BeautifulSoup(sub_res.text, "html.parser")
@@ -74,13 +74,14 @@ try:
         
         
         Activity_dic = {
-            "Sources": ["https://www.g9cip.com/",url],
+            
             "Title": title,
             "Date": date,
             "Content": Content,
             "Location": site,
             "Holder": holder,
-            "Images": img_url
+            "Images": img_url,
+            "Sources": ["https://www.g9cip.com/",url]
         }
 
         ActivityList.append(Activity_dic)
@@ -90,5 +91,4 @@ try:
 
     record_runtime(f"\nG9CreativeParkCrawler上次更新時間為:{now}\n\t執行成功")
 except Exception as e:
-    print(e)
-    record_runtime(f"\nG9CreativeParkCrawler上次更新時間為:{now}\n\t**執行失敗")
+    record_runtime(f"\nG9CreativeParkCrawler上次更新時間為:{now}\n\t**執行失敗\n\t\t{e}")

@@ -20,12 +20,7 @@ def record_runtime(text):
 try:
     url = "https://www.ctesa.com.tw/tournaments"
 
-    resource_path = "./projects"
-
-    if not os.path.exists(resource_path):
-        os.mkdir(resource_path)
-
-    driver = webdriver.Chrome(executable_path='./chromedriver.exe')
+    driver = webdriver.Chrome(executable_path='./Tools/chromedriver.exe')
 
     driver.get(url)
     time.sleep(2)
@@ -34,7 +29,7 @@ try:
 
     select.select_by_index(1)
     time.sleep(5)
-
+    OutputList = []
     for i in range(1, 8):
         driver.find_element(
             By.XPATH, "//*[@id=\"course\"]/div[3]/div[{}]/div[2]/a".format(i)).click()
@@ -57,24 +52,12 @@ try:
             "image": [img],
             "id": 0,
         }
-
-        if not os.path.isfile("./projects/index.json"):  # initailize the json file
-            with open("./projects/index.json", "w") as InitialFile:
-                InitialFile.write("[]")
-
-        # transfer the article dic to json
-        with open("./projects/index.json", "r", encoding="utf-8") as JsonFile:
-            jsonDict = json.load(JsonFile)
-
-        jsonDict.append(article)  # add all every dic in to this list
-
-        # write this to the json file
-        with open("./projects/index.json", "w",  encoding="utf-8") as writeFile:
-            json.dump(jsonDict, writeFile, ensure_ascii=False, indent=1)
+        OutputList.append(article)
 
         driver.find_element(
             By.XPATH, "//*[@id=\"tournaments\"]/div/div/div[1]/button/span[1]").click()
-
+    with open("./FilterTools/SpiderData/CTESA.json", "w", encoding="utf-8") as writeFile:
+        json.dump(OutputList , writeFile, ensure_ascii=False, indent=4)
     record_runtime(f"\nCTESA上次更新時間為:{now}\n\t執行成功")
 except:
     record_runtime(f"\nCTESA上次更新時間為:{now}\n\t**執行失敗")

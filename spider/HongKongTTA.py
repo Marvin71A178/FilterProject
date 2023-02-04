@@ -5,6 +5,8 @@ import os
 import json
 import datetime
 now = datetime.datetime.now()
+
+
 def record_runtime(text):
     with open("./Daily/DailyRecord" , "a", encoding="utf-8") as writefile:
         writefile.write(text)
@@ -14,13 +16,6 @@ try:
 
     titles = []
     urls = []
-
-
-    resource_path = "./projects"
-
-    if not os.path.exists(resource_path):
-        os.mkdir(resource_path)
-
 
     header = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"}
 
@@ -35,9 +30,7 @@ try:
             titles.append(entry.text)
         except TypeError as e:
             continue
-
-
-
+    OutputList = []
     for url in urls:
 
         res_next = requests.get(url,header)
@@ -63,31 +56,16 @@ try:
         content_str = ' '.join(content_list)
 
         article = {
-            "source_web_name":"香港卓藝協會",
-            "source_url":o_url,
-            "url" : url,
-            "title" : titles[urls.index(url)],
-            "content" : content_str,
-            "date" : None,
-            "image":image_list,
-            "id" : 0,
+            "Title" : titles[urls.index(url)],
+            "Content" : content_str,
+            "Sources" : [o_url , url] ,
+            "Images": image_list
         }
+        OutputList.append(article)
+    
+    with open("./FilterTools/SpiderData/HongKongTTA.json", "w", encoding="utf-8") as writeFile:
+        json.dump(OutputList , writeFile, ensure_ascii=False, indent=4)
 
-        if not os.path.isfile("./projects/index.json"): # initailize the json file
-            with open("./projects/index.json", "w") as InitialFile:
-                InitialFile.write("[]")
-
-            
-        with open("./projects/index.json", "r", encoding="utf-8") as JsonFile: #transfer the article dic to json 
-            jsonDict = json.load(JsonFile) 
-
-
-        jsonDict.append(article) #add all every dic in to this list
-            
-        with open("./projects/index.json", "w",  encoding="utf-8") as writeFile: #write this to the json file
-            json.dump( jsonDict , writeFile , ensure_ascii=False ,indent = 1 )
-
-            
     record_runtime(f"\nHongKongTTA上次更新時間為:{now}\n\t執行成功")
-except:
-    record_runtime(f"\nHongKongTTA上次更新時間為:{now}\n\t**執行失敗")
+except Exception as e :
+    record_runtime(f"\nHongKongTTA上次更新時間為:{now}\n\t**執行失敗\n\t\t{e}")

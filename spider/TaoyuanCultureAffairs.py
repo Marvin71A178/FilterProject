@@ -20,13 +20,6 @@ try:
     hrefs = []
     dates = []
 
-    resource_path = "./projects"
-
-    if not os.path.exists(resource_path):
-        os.mkdir(resource_path)
-
-
-
     urls = soup.find_all("div" , class_ = "css_td list_title")
     table = soup.find_all("div",class_ = "css_td list_date")
 
@@ -39,7 +32,7 @@ try:
         dates.append(tabl.text)
 
     content = []
-
+    OutputActivity = []
     for href in hrefs:
 
         h_res = requests.get(href,header)
@@ -55,34 +48,20 @@ try:
         for content in contents:
             content_list.append(content.text.replace(" ", "").replace("\r", "").replace("\xa0", ""))
         content_str = ' '.join(content_list)
-
+        if img_list == []:
+            img_list = None
         article ={
-            "source_web_name":"桃園文化局",
-            "source_url":"hhttps://culture.tycg.gov.tw/index.jsp",
-            "url" : href,
-            "title" : title[hrefs.index(href)],
-            "content" : content_str,
-            "date" : dates[hrefs.index(href)].replace("-","/"),
-            "image":img_list,
-            "id" : 0,
+            "Title" :title[hrefs.index(href)],
+            "Content" :content_str,
+            "Sources" : ["https://culture.tycg.gov.tw/" , href],
+            "Date" : dates[hrefs.index(href)].replace("-","/"),
+            "Images" :img_list,
         }
-
-    # if os.path.isfile("./projects/index.json"): # initailize the json file
-        with open("./projects/index.json", "w") as InitialFile:
-            InitialFile.write("[]")
-
-            
-        with open("./projects/index.json", "r", encoding="utf-8") as JsonFile: #transfer the article dic to json 
-            jsonDict = json.load(JsonFile) 
-
-
-        jsonDict.append(article) #add all every dic in to this list
-            
-        with open("./projects/index.json", "w",  encoding="utf-8") as writeFile: #write this to the json file
-            json.dump( jsonDict , writeFile , ensure_ascii=False ,indent = 1 )
-
+        OutputActivity.append(article)
         
-            
+    with open("./FilterTools/SpiderData/TaoyuanCultureAffairs.json", "w", encoding="utf-8") as writeFile:
+        json.dump(OutputActivity , writeFile, ensure_ascii=False, indent=4)
+
     record_runtime(f"\nTaoyuanCultureAffairs上次更新時間為:{now}\n\t執行成功")
-except:
-    record_runtime(f"\nTaoyuanCultureAffairs上次更新時間為:{now}\n\t**執行失敗")
+except Exception as e:
+    record_runtime(f"\nTaoyuanCultureAffairs上次更新時間為:{now}\n\t**執行失敗\n\t\t{e}")

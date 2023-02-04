@@ -51,7 +51,7 @@ try:
             continue
     url_list.pop()
     title.pop()
-
+    OutputActivity = []
     for ur in url_list:
         res_u = requests.get(ur,headers)
         soup_u = BeautifulSoup(res_u.text,"html.parser")
@@ -67,31 +67,17 @@ try:
 
         
         article ={
-            "source_web_name":"台灣美術館",
-            "source_url":"https://www.ntmofa.gov.tw/",
-            "url" : ur,
-            "title" : title[url_list.index(ur)],
-            "content" : content_str,
-            "date" : dates[url_list.index(ur)],
-            "image":[image],
-            "id" : 0,
+            "Title" :title[url_list.index(ur)],
+            "Content" : content_str,
+            "Sources" :["https://www.ntmofa.gov.tw/",ur],
+            "Date" : dates[url_list.index(ur)],
+            "Images":[image]
         }
 
-        if not os.path.isfile("./projects/index.json"): # initailize the json file
-            with open("./projects/index.json", "w") as InitialFile:
-                InitialFile.write("[]")
-
-            
-        with open("./projects/index.json", "r", encoding="utf-8") as JsonFile: #transfer the article dic to json 
-            jsonDict = json.load(JsonFile) 
-
-
-        jsonDict.append(article) #add all every dic in to this list
-            
-        with open("./projects/index.json", "w",  encoding="utf-8") as writeFile: #write this to the json file
-            json.dump( jsonDict , writeFile , ensure_ascii=False ,indent = 1 )
-            
+        OutputActivity.append(article)
+    with open("./FilterTools/SpiderData/NationalTaiwanMuseum.json", "w", encoding="utf-8") as writeFile:
+        json.dump(OutputActivity , writeFile, ensure_ascii=False, indent=4)    
                 
     record_runtime(f"\nNationalTaiwanMuseum上次更新時間為:{now}\n\t執行成功")
-except:
-    record_runtime(f"\nNationalTaiwanMuseum上次更新時間為:{now}\n\t**執行失敗")
+except Exception as e:
+    record_runtime(f"\nNationalTaiwanMuseum上次更新時間為:{now}\n\t**執行失敗\n\t\t{e}")

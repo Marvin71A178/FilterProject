@@ -1,9 +1,20 @@
-# 彰化女中
+from bs4 import BeautifulSoup
+import requests
 import json
-import os
+import time
+from selenium import webdriver
 import datetime
-now = datetime.datetime.now()
 
+now = datetime.datetime.now()
+def printProgressBar(now, total, length=20):
+    progress = now/total
+    progressValue = int((progress)*length)
+    print("\r[%s%s] %d/%d" % (
+        progressValue * "=",
+        (length - progressValue) * " ",
+        now,
+        total
+    ), end="")
 
 def record_runtime(text):
     with open("./Daily/DailyRecord", "a", encoding="utf-8") as writefile:
@@ -11,36 +22,57 @@ def record_runtime(text):
 
 
 try:
-    load = open("./projects/index.json", 'r', encoding="utf-8")
-    js = json.load(load)
-    load.close()
+    driver = webdriver.Chrome("./Tools/chromedriver.exe")
+    url = "https://www.chgsh.chc.edu.tw/tag/game/"
+    driver.get(url)
+    headers = {"User-Agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36"}
+    temp_height = 0
 
-    for j in js:
+    prev_ele = None
+    while True:
+        driver.execute_script("window.scrollBy(0,1000)")
 
-        article = {
-            "source_web_name": j["source_web_name"],
-            "source_url": j["source_url"],
-            "url": j["url"],
-            "title": j["title"],
-            "content": j["content"],
-            "date": j["date"],
-            "image": [j["image"]],
-            "id": 0
+        check_height = driver.execute_script("return document.      documentElement.scrollTop || window.pageYOffset || document.body.scrollTop;")
+        
+        if check_height == temp_height:
+            break
+        temp_height = check_height
+        
+    time.sleep(2)
+
+    soup = BeautifulSoup(driver.page_source,"html.parser")
+
+    driver.close()
+
+    blog = soup.find("div", {"id" : "blog-entries"})
+
+    element = blog.find_all("h2",{"class":"blog-entry-title entry-title"})
+
+    OutputList = []
+    finished_post = 0
+    total_post = len(element)
+    for i in element:
+        activity_url = i.a['href']
+        res = requests.get(activity_url,headers = headers)
+        small_soup = BeautifulSoup(res.text,"html.parser")
+        
+        contents = small_soup.find("div" ,class_="entry-content clr")
+        con = []
+        for content in contents.find_all('p'):
+            con.append(content.text)
+        body_str = ' '.join(con)
+        outputdic = {
+            "Title" : i.a["title"],
+            "Content" : body_str,
+            "Sources" : [activity_url]
         }
+        OutputList.append(outputdic)
+        finished_post += 1
+        printProgressBar(finished_post, total_post)
 
-        if not os.path.isfile("./projects/index1.json"):  # initailize the json file
-            with open("./projects/index1.json", "w") as InitialFile:
-                InitialFile.write("[]")
-        # transfer the article dic to json
-        with open("./projects/index1.json", "r", encoding="utf-8") as JsonFile:
-            jsonDict = json.load(JsonFile)
-
-        jsonDict.append(article)
-
-        # write this to the json file
-        with open("./projects/index1.json", "w",  encoding="utf-8") as writeFile:
-            json.dump(jsonDict, writeFile, ensure_ascii=False, indent=1)
-
+    with open("./FilterTools/SpiderData/ChanhuaGirls.json", "w", encoding="utf-8") as writeFile:
+        json.dump(OutputList , writeFile , ensure_ascii=False, indent=4)
+        
     record_runtime(f"\nChanhuaGirls上次更新時間為:{now}\n\t執行成功")
-except:
-    record_runtime(f"\nChanhuaGirls上次更新時間為:{now}\n\t**執行失敗")
+except Exception as e :
+    record_runtime(f"\nChanhuaGirls上次更新時間為:{now}\n\t**執行失敗\n\t\t{e}")

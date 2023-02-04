@@ -1,130 +1,66 @@
 #青年發展署
 import requests
 from bs4 import BeautifulSoup
-import os
-import uuid
-import json
 import numpy as np
 import datetime
+import itertools
+import json
 now = datetime.datetime.now()
+headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
+    }
+class Activity():
+    def __init__(self,url,image):
+        self.url = url
+        
+        self.Content = ""
+        self.Images = [image]
+        self.Sources = ""
+        res = requests.get(self.url , headers = headers)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        self.Title = soup.find("h2", {"class" : "page-title"}).text.strip()
+        cont = soup.find("div", {"class" : "cont"} ).find_all(text = True)
+        self.Content = "\n".join(Content.strip() for Content in cont)
+        
+    def OutputFormat(self):
+        Format = {
+            "Title" : self.Title,
+            "Content" : self.Content,
+            "Images" : self.Images,
+            "Sources" : [self.url]
+        }
+        return Format
+
 def record_runtime(text):
     with open("./Daily/DailyRecord" , "a", encoding="utf-8") as writefile:
         writefile.write(text)
 try:
-    url = "https://www.yda.gov.tw/"
-
-    headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"}
-
-    res = requests.get(url , headers=headers)
-    soup = BeautifulSoup(res.text,"html.parser")
-
-    ##############################################################################################################
-
-    title = soup.select('div[class = "regist-btn"]') #the all article's url
-
-
-    img_list = []
-    img = soup.find_all("figure" , class_ = "img")
-    for i in img:
-        img_list.append("https://www.yda.gov.tw"+i.img['src'])
-
-
-    checker = [] 
-    def check_url(title):
-        for art in title:
-            con = str(art.a['href'])
-            checker.append(con)
-
-    dates = soup.select('small[class = "date"]') 
-
-    date_list = []
-    def date_time(dates):
-        for date in dates:
-            string = date.text.replace(" ", "").replace("\r", "").replace("\n", " ")
-            if string[0:3] ==" 活動":
-                date_list.append(string)
-
-    date_time(dates)
-    check_url(title)
-
-
-
-
-    resource_path = "./projects"
-
-    if not os.path.exists(resource_path):
-        os.mkdir(resource_path)
-
-    jsonDict = []
-
-
-    #method for getting the JSON file
-    def get_url(checker):
-        i = 0
-        for con in checker:
-            url_content = "https://www.yda.gov.tw/"+con
-            res_content = requests.get(url = url_content,headers = headers)
-            soup_content = BeautifulSoup(res_content.text,"html.parser")
-            con_title = soup_content.find('h2',class_ = "page-title").text.replace(" ", "").replace("\r", "").replace("\n", " ")
-            p_list = []
-            body = soup_content.find('div', class_ = "event-info-wrap")
-
-            for p in body.find_all('p'):
-                p_list.append(p.text.replace(" ", "").replace("\r", "").replace("\xa0", ""))
-            body_str = ' '.join(p_list)
-
-            article = {           #build a dic for one article
-                "source_web_name":"青年發展署",
-                "source_url":url,
-                "url" : url_content,
-                "title" : con_title,
-                "content" : body_str,
-                "date" : date_list[i],
-                "image":img_list[i],
-                "id" : 0,
-            }
-            i+=1
-
-            if not os.path.isfile("./projects/index.json"): # initailize the json file
-                with open("./projects/index.json", "w") as InitialFile:
-                    InitialFile.write("[]")
-
-            
-            with open("./projects/index.json", "r", encoding="utf-8") as JsonFile: #transfer the article dic to json 
-                jsonDict = json.load(JsonFile) 
-
-
-            jsonDict.append(article) #add all every dic in to this list
-            
-            with open("./projects/index.json", "w",  encoding="utf-8") as writeFile: #write this to the json file
-                json.dump( jsonDict , writeFile , ensure_ascii=False ,indent = 1 )
-    get_url(checker)
-
-    #   get_url(checker)
-    #method to deal with JSON and cut the words to arrange the article
-    # def cut_article():
-    #     with open('./projects/index.json',"r",encoding = "utf-8") as readFile:
-    #         data = json.load(readFile)
-
-    #     for content in data :
-    #         atrticle = content['content']
-    #         after = "|".join(jieba.cut(atrticle,cut_all=False,HMM=True))
-    #         word_list = after.split("|")
-    #         try:
-    #             wl = np.array(word_list)
-    #             print((wl))
-    #             loc = np.where(wl == "報名˙")            
-    #             print(loc)
-    #             # for i in range(loc[0],loc[0]+10):
-    #             #     print(word_list[i],end = "")
-    #             print()
-    #         except ValueError as e:
-    #             print(content['id']+" does not exit 日期")
+    Activities_dic = {}
+    Activities_dic_len = 0
+    for i in itertools.count(start= 1):
         
-
-    # cut_article()
-
-                
+        o_url = f"https://www.yda.gov.tw/EventList.aspx?uid=101&pid=56&page={i}"
+        res = requests.get(o_url, headers = headers)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        linkList = soup.find_all("div",{"class" : "event-box"})
+        for j in linkList:
+            Links = j.find_all("a")
+            for Link in Links:
+                for child in Link.children:
+                    if child.name == "figure":
+                        image = Link.find("img")
+                        Activities_dic["https://www.yda.gov.tw/" + Link["href"]] = "https://www.yda.gov.tw" + image["src"]
+        if len(Activities_dic) == Activities_dic_len:
+            break
+        else:
+            Activities_dic_len = len(Activities_dic)
+    OutputAvtivity = []
+    for key, value in Activities_dic.items():
+        obj = Activity(key,value)
+        OutputAvtivity.append(obj.OutputFormat())
+    
+    with open("./FilterTools/SpiderData/YouthDevelopAdministration.json", "w",  encoding="utf-8") as writeFile:
+        json.dump(OutputAvtivity, writeFile, ensure_ascii=False, indent=4)
     record_runtime(f"\nYouthDevelopAdministration上次更新時間為:{now}\n\t執行成功")
-except:
-    record_runtime(f"\nYouthDevelopAdministration上次更新時間為:{now}\n\t**執行失敗")
+except Exception as e:
+    record_runtime(f"\nYouthDevelopAdministration上次更新時間為:{now}\n\t**執行失敗\n\t\t{e}")

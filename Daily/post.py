@@ -39,6 +39,10 @@ def activity_controller_async(activity_list):
 def post_activity_async(post_list):
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     r = requests.post(HOST, json=post_list, headers=headers, timeout=5)
+    if r.status_code == 400:
+        with open("TEMP.json", "w", encoding="utf-8") as jsonFile:
+            jsonFile.write(json.dumps(post_list, indent=4))
+        exit()
     return r.status_code
 
 
