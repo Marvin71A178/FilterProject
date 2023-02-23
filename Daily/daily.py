@@ -15,7 +15,7 @@ def get_python():
 
 
 def get_time_now():
-    return datetime.now().strftime("%H:%M:%S")
+     return datetime.now().strftime("%H:%M:%S")
 
 
 def do_scan():
@@ -33,7 +33,7 @@ def do_scan():
     subprocess.run([get_python() , os.path.join(parent_path , "FilterTools" , "filter.py")])
     
     #post
-    #subprocess.run([get_python() , os.path.join(parent_path , "Daily" , "post.py")])
+    subprocess.run([get_python() , os.path.join(parent_path , "Daily" , "post.py")])
     
 
 

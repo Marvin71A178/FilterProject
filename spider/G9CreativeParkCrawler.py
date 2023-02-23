@@ -4,7 +4,19 @@ from bs4 import BeautifulSoup
 import itertools
 import json
 import datetime
+import base64
 now = datetime.datetime.now()
+
+
+def printProgressBar(now, total, length=20):
+    progress = now/total
+    progressValue = int((progress)*length)
+    print("__ G9CreativeParkCrawler\r[%s%s] %d/%d" % (
+        progressValue * "=",
+        (length - progressValue) * " ",
+        now,
+        total
+    ), end="")
 
 
 def record_runtime(text):
@@ -26,10 +38,12 @@ try:
             allActivity_set.add(link['href'])
         if res.status_code == 404:
             break
-    
+
     ActivityList = []
+    finished_post = 0
     for url in allActivity_set:
-        
+        finished_post += 1
+        printProgressBar(finished_post , len(allActivity_set))
         sub_url = url
         sub_res = requests.get(sub_url, headers=header)
         sub_soup = BeautifulSoup(sub_res.text, "html.parser")
@@ -41,10 +55,12 @@ try:
             "body > div > section > div > div > div > section > div > div")
         img_url = []
         Content = ""
+        html = sub_soup.find("div", {
+                             "data-settings": '{"background_background":"classic","_ob_bbad_is_stalker":"no","_ob_teleporter_use":false,"_ob_column_hoveranimator":"no","_ob_column_has_pseudo":"no"}'})
         for fimg in mainBody:
             if fimg.get("data-settings") == '{"background_background":"classic","_ob_bbad_is_stalker":"no","_ob_teleporter_use":false,"_ob_column_hoveranimator":"no","_ob_column_has_pseudo":"no"}':
                 imgli = fimg.select("img")
-                #find all content
+                # find all content
                 Contents = fimg.find_all(text=True)
                 Content = "\n".join(Content.strip() for Content in Contents)
                 for k in imgli:
@@ -71,17 +87,17 @@ try:
             if content_li[i] == "地點":
                 site = content_li[i+1]
                 break
-        
-        
+
         Activity_dic = {
-            
+
             "Title": title,
-            "Date": date,
             "Content": Content,
+            "Date": date,
+            "html" :  base64.b64encode(str(html).encode("utf-8")).decode('utf-8'),
             "Location": site,
             "Holder": holder,
             "Images": img_url,
-            "Sources": ["https://www.g9cip.com/",url]
+            "Sources": ["https://www.g9cip.com/", url]
         }
 
         ActivityList.append(Activity_dic)

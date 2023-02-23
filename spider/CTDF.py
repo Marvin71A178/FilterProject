@@ -5,8 +5,16 @@ import json
 import datetime
 import datetime
 now = datetime.datetime.now()
-
-
+import base64
+def printProgressBar(now, total, length=20):
+    progress = now/total
+    progressValue = int((progress)*length)
+    print("\r[%s%s] %d/%d" % (
+        progressValue * "=",
+        (length - progressValue) * " ",
+        now,
+        total
+    ), end="")
 def record_runtime(text):
     with open("./Daily/DailyRecord", "a", encoding="utf-8") as writefile:
         writefile.write(text)
@@ -32,11 +40,15 @@ try:
                 titles.append(entry.text.replace("\n", "").replace("\xa0", ""))
                 urls.append("http://www.twctdf.com/"+entry.a['href'])
     OutputList = []
+    total_post = len(urls)
+    finished_post = 0
     for url in urls:
-
+        finished_post += 1
+        printProgressBar(finished_post, total_post)
+        
         res_next = requests.get(url, header)
         soup_next = BeautifulSoup(res_next.text, "html.parser")
-
+        print(url)
         contents = soup_next.find("div", class_="post_content padding-3")
         content_list = []
 
@@ -49,7 +61,8 @@ try:
         article = {
             "Title": titles[urls.index(url)],
             "Content": content_str,
-            "Sources":[o_url , url]
+            "Sources":[o_url , url],
+            "html" : base64.b64encode(str(contents).encode("utf-8")).decode('utf-8')
         }
         OutputList.append(article)
     
@@ -57,5 +70,5 @@ try:
         json.dump(OutputList , writeFile, ensure_ascii=False, indent=4)
 
     record_runtime(f"\nCTDF上次更新時間為:{now}\n\t執行成功")
-except:
-    record_runtime(f"\nCTDF上次更新時間為:{now}\n\t**執行失敗")
+except Exception as e:
+    record_runtime(f"\nCTDF上次更新時間為:{now}\n\t**執行失敗\n\t\t{e}")
